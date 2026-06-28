@@ -139,8 +139,6 @@
     .btn--outline:hover { background: var(--ice-50); border-color: var(--ice-400); }
     .btn--lg { padding: 1rem 2rem; font-size: 1.0625rem; }
     .btn--full { width: 100%; }
-    .btn--calendly { background: var(--white); color: var(--ice-700); border: 2px solid var(--ice-200); margin-bottom: 1rem; }
-    .btn--calendly:hover { background: var(--ice-50); border-color: var(--ice-400); }
 
     /* Hero */
     .hero { position: relative; min-height: 100svh; display: flex; align-items: center; padding: 6rem 0 4rem; overflow: hidden; }
@@ -501,6 +499,35 @@
     .form-recap__line { display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--gray-600); margin-bottom: 0.375rem; }
     .form-recap__line span:last-child { font-weight: 600; color: var(--gray-800); }
     .form-recap__total { display: flex; justify-content: space-between; padding-top: 0.75rem; margin-top: 0.5rem; border-top: 2px dashed var(--ice-200); font-weight: 800; font-size: 1.125rem; color: var(--ice-700); }
+    .booking-conditions {
+      background: var(--white);
+      border: 1px solid var(--ice-200);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin: 0 auto 1.5rem;
+      max-width: 640px;
+      display: grid;
+      gap: 1rem;
+    }
+    .booking-conditions__item {
+      display: flex;
+      gap: 0.875rem;
+      align-items: flex-start;
+    }
+    .booking-conditions__item svg,
+    .booking-conditions__item i { color: var(--ice-600); flex-shrink: 0; margin-top: 0.125rem; }
+    .booking-conditions__item strong {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.25rem;
+    }
+    .booking-conditions__item p {
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+      line-height: 1.5;
+    }
     .form-success { display: none; text-align: center; padding: 2rem; }
     .form-success.visible { display: block; }
     .form-success__icon { color: var(--ice-600); margin-bottom: 1rem; }
@@ -705,8 +732,8 @@
         </div>
       </div>
       <p class="pricing__note fade-in">
-        <i data-lucide="info" style="width:16px;height:16px;color:var(--ice-500)"></i>
-        Installation et reprise incluses · Supplément livraison selon zone (Zone 1 incluse)
+        <i data-lucide="info" style="width:16px;height:16px;color:var(--ice-500)" aria-hidden="true"></i>
+        Installation et reprise incluses · Supplément livraison selon zone · Paiement à l'installation · Caution 150 €
       </p>
     </div>
   </section>
@@ -861,7 +888,23 @@
       <div class="section-header fade-in">
         <span class="section-header__tag">Réservation</span>
         <h2 class="section-header__title">Réserver votre climatiseur</h2>
-        <p class="section-header__desc">Location minimum 2 jours. Remplissez le formulaire — nous vous recontactons sous 24 h.</p>
+        <p class="section-header__desc">Location minimum 2 jours. Remplissez le formulaire — nous vous recontactons sous 24 h pour confirmer.</p>
+      </div>
+      <div class="booking-conditions fade-in">
+        <div class="booking-conditions__item">
+          <i data-lucide="credit-card" style="width:20px;height:20px" aria-hidden="true"></i>
+          <div>
+            <strong>Paiement à l'installation</strong>
+            <p>Le règlement de la location s'effectue au moment de l'installation, par virement instantané, liquide ou carte bancaire.</p>
+          </div>
+        </div>
+        <div class="booking-conditions__item">
+          <i data-lucide="shield-check" style="width:20px;height:20px" aria-hidden="true"></i>
+          <div>
+            <strong>Chèque de caution — 150 €</strong>
+            <p>Un chèque de caution de 150 € vous sera demandé à l'installation. Il vous sera restitué intégralement lors de la récupération du matériel.</p>
+          </div>
+        </div>
       </div>
       <div class="form-card fade-in">
         <div class="form-wrapper" id="form-wrapper">
@@ -910,12 +953,6 @@
                 <input type="date" id="date-fin" name="date_fin" required>
                 <span class="form-days-info" id="form-days-info"></span>
               </div>
-            </div>
-            <div class="form-row">
-              <a href="YOUR_CALENDLY_LINK" target="_blank" rel="noopener" class="btn btn--calendly btn--full">
-                <i data-lucide="calendar" style="width:18px;height:18px"></i>
-                Choisir mes dates sur le calendrier
-              </a>
             </div>
             <div class="form-row">
               <div class="form-group">
