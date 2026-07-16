@@ -2,9 +2,9 @@
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
     { "source": "/admin", "destination": "/admin.html" },
-    { "source": "/blog", "destination": "/blog/index.html" },
-    { "source": "/blog/louer-ou-acheter-climatiseur", "destination": "/blog/louer-ou-acheter-climatiseur.html" },
-    { "source": "/blog/canicule-conseils-chaleur-la-rochelle", "destination": "/blog/canicule-conseils-chaleur-la-rochelle.html" },
-    { "source": "/blog/location-climatiseur-la-rochelle", "destination": "/blog/location-climatiseur-la-rochelle.html" }
+    { "source": "/blog", "destination": "/blog-index.html" },
+    { "source": "/blog/louer-ou-acheter-climatiseur", "destination": "/blog-louer-ou-acheter.html" },
+    { "source": "/blog/canicule-conseils-chaleur-la-rochelle", "destination": "/blog-canicule.html" },
+    { "source": "/blog/location-climatiseur-la-rochelle", "destination": "/blog-location-la-rochelle.html" }
   ]
 }
