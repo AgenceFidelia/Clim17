@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin Clim17 — Gestion du parc</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://bcabyarwggmgzysrtldp.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjYWJ5YXJ3Z2dtZ3p5c3J0bGRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0OTIwNDgsImV4cCI6MjA5OTA2ODA0OH0.677009fwcgq-t8fv2JZgJjYku1iR_rm9dQV0avyvh9I';
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #2E86AB;
+      --blue-dark: #256f8e;
+      --orange: #F4A261;
+      --orange-dark: #e8924d;
+      --white: #ffffff;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-400: #94a3b8;
+      --gray-600: #475569;
+      --gray-800: #1e293b;
+      --green: #16a34a;
+      --red: #dc2626;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--white);
+      color: var(--gray-800);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: var(--blue);
+      color: var(--white);
+      padding: 1.25rem 0;
+      margin-bottom: 0;
+    }
+
+    .header h1 { font-size: 1.375rem; font-weight: 800; }
+    .header p { font-size: 0.875rem; opacity: 0.9; margin-top: 0.25rem; }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 1.25rem 3rem;
+    }
+
+    .admin-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 1rem 0 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      margin-bottom: 1.5rem;
+    }
+
+    .admin-nav__btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--gray-200);
+      border-radius: 999px;
+      background: var(--white);
+      color: var(--gray-600);
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .admin-nav__btn:hover { border-color: var(--blue); color: var(--blue); }
+    .admin-nav__btn.active {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: var(--white);
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .section {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .section__title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--gray-200);
+    }
+
+    label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--gray-600);
+      margin-bottom: 0.375rem;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.625rem 0.75rem;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      background: var(--white);
+    }
+
+    textarea { min-height: 72px; resize: vertical; }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid rgba(46, 134, 171, 0.25);
+      border-color: var(--blue);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover { opacity: 0.88; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn--blue { background: var(--blue); color: var(--white); }
+    .btn--orange { background: var(--orange); color: var(--white); }
+    .btn--ghost { background: var(--white); color: var(--gray-800); border: 1px solid var(--gray-200); }
+    .btn--danger { background: var(--red); color: var(--white); }
+    .btn--success { background: var(--green); color: var(--white); }
+    .btn--sm { padding: 0.375rem 0.75rem; font-size: 0.8125rem; }
+
+    .form-row { display: grid; gap: 1rem; margin-bottom: 1rem; }
+    @media (min-width: 640px) {
+      .form-row--2 { grid-template-columns: 1fr 1fr; }
+      .form-row--4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    }
+
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .alert.visible { display: block; }
+    .alert--ok { background: rgba(22, 163, 74, 0.1); color: var(--green); border: 1px solid rgba(22, 163, 74, 0.25); }
+    .alert--error { background: rgba(220, 38, 38, 0.1); color: var(--red); border: 1px solid rgba(220, 38, 38, 0.25); }
+
+    .clim-list { display: grid; gap: 1rem; margin-bottom: 1.25rem; }
+
+    .clim-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .clim-card__header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .clim-card__header .field-nom { flex: 1; min-width: 160px; }
+
+    .badge {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .badge--active { background: rgba(22, 163, 74, 0.12); color: var(--green); }
+    .badge--inactive { background: var(--gray-100); color: var(--gray-600); }
+
+    .clim-card__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .save-msg {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--green);
+      margin-left: auto;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .save-msg.visible { opacity: 1; }
+
+    .add-clim {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: flex-end;
+      padding-top: 1rem;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .add-clim .field { flex: 1; min-width: 180px; }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      background: var(--white);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    th {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--gray-600);
+      background: var(--gray-100);
+    }
+
+    .statut {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    .statut--confirmed { background: rgba(22, 163, 74, 0.12); color: var(--green); }
+    .statut--pending { background: rgba(244, 162, 97, 0.2); color: #c6762a; }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+
+    .empty, .loading {
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--gray-400);
+      font-size: 0.875rem;
+    }
+
+    .chart-wrap {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      height: 320px;
+    }
+
+    .stats-view-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stats-view-tab {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--gray-200);
+      border-radius: 999px;
+      background: var(--white);
+      color: var(--gray-600);
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .stats-view-tab:hover { border-color: var(--blue); color: var(--blue); }
+    .stats-view-tab.active {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: var(--white);
+    }
+
+    .stats-recap {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    @media (min-width: 640px) {
+      .stats-recap { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .stats-recap__item {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 1rem 1.125rem;
+    }
+
+    .stats-recap__label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--gray-600);
+      margin-bottom: 0.375rem;
+    }
+
+    .stats-recap__value {
+      font-size: 1.125rem;
+      font-weight: 800;
+      color: var(--blue);
+      line-height: 1.3;
+    }
+
+    .stats-recap__value--orange { color: var(--orange-dark); }
+
+    .section-subtitle {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--blue);
+      margin: 0 0 1rem;
+    }
+
+    .roi-positive { color: var(--green); font-weight: 600; }
+    .roi-negative { color: var(--red); font-weight: 600; }
+
+    .map-layout {
+      display: grid;
+      gap: 1rem;
+    }
+
+    @media (min-width: 768px) {
+      .map-layout { grid-template-columns: 1fr 280px; }
+    }
+
+    #fleet-map {
+      height: 420px;
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+      z-index: 1;
+    }
+
+    .map-sidebar {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 1rem;
+      font-size: 0.875rem;
+    }
+
+    .map-sidebar h3 {
+      font-size: 0.9375rem;
+      color: var(--blue);
+      margin-bottom: 0.75rem;
+    }
+
+    .map-sidebar ul { list-style: none; }
+    .map-sidebar li { padding: 0.375rem 0; border-bottom: 1px solid var(--gray-100); color: var(--gray-600); }
+    .map-sidebar li:last-child { border-bottom: none; }
+
+    .leaflet-tooltip.clim-label {
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .leaflet-tooltip.clim-label::before { border-top-color: var(--blue); }
+
+    #login-screen { display: block; min-height: 100vh; background: var(--gray-50); }
+    #admin-panel { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="login-screen">
+    <div style="max-width:380px; margin:100px auto; padding:2rem; background:white; border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,0.12);">
+      <div style="text-align:center; margin-bottom:1.5rem;">
+        <p style="font-size:2rem;">❄️</p>
+        <h2 style="color:#2E86AB; margin:0;">Clim17 Admin</h2>
+        <p style="color:#888; font-size:13px;">Accès réservé</p>
+      </div>
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:13px; font-weight:600; color:#333;">Identifiant</label>
+        <input type="text" id="input-username" placeholder="Votre identifiant" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:4px; box-sizing:border-box; font-size:14px;">
+      </div>
+      <div style="margin-bottom:1.5rem;">
+        <label style="font-size:13px; font-weight:600; color:#333;">Mot de passe</label>
+        <input type="password" id="input-password" placeholder="Votre mot de passe" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:4px; box-sizing:border-box; font-size:14px;">
+      </div>
+      <button id="btn-login" style="width:100%; padding:12px; background:#2E86AB; color:white; border:none; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer;">Se connecter</button>
+      <p id="error-msg" style="display:none; color:#e34948; text-align:center; margin-top:1rem; font-size:13px;">Identifiant ou mot de passe incorrect.</p>
+    </div>
+  </div>
+
+  <div id="admin-panel">
+    <header class="header">
+      <div class="container">
+        <h1>Clim17 — Administration</h1>
+        <p>Gestion du parc et des réservations</p>
+      </div>
+    </header>
+
+    <main class="container">
+      <nav class="admin-nav" aria-label="Navigation admin">
+        <button type="button" class="admin-nav__btn active" data-panel="parc">Parc</button>
+        <button type="button" class="admin-nav__btn" data-panel="reservations">Réservations</button>
+        <button type="button" class="admin-nav__btn" data-panel="statistiques">Statistiques</button>
+        <button type="button" class="admin-nav__btn" data-panel="carte">Carte</button>
+      </nav>
+
+      <!-- Panel Parc -->
+      <div id="panel-parc" class="panel active">
+        <section class="section">
+          <h2 class="section__title">Mon parc de climatiseurs</h2>
+          <div class="clim-list" id="clim-list">
+            <p class="loading">Chargement…</p>
+          </div>
+          <form class="add-clim" id="add-clim-form">
+            <div class="field">
+              <label for="new-clim-nom">Ajouter une clim</label>
+              <input type="text" id="new-clim-nom" required placeholder="Ex: Clim-01">
+            </div>
+            <button type="submit" class="btn btn--blue">Ajouter une clim</button>
+          </form>
+        </section>
+      </div>
+
+      <!-- Panel Réservations -->
+      <div id="panel-reservations" class="panel">
+        <section class="section">
+          <h2 class="section__title" id="res-form-title">Ajouter une réservation</h2>
+          <div class="alert alert--ok" id="res-success"></div>
+          <div class="alert alert--error" id="res-error"></div>
+          <form id="add-reservation-form">
+            <div class="form-row form-row--2">
+              <div>
+                <label for="res-clim">Climatiseur</label>
+                <select id="res-clim" required></select>
+              </div>
+              <div>
+                <label for="res-client">Nom du client</label>
+                <input type="text" id="res-client" required placeholder="Jean Dupont">
+              </div>
+            </div>
+            <div class="form-row form-row--2">
+              <div>
+                <label for="input-adresse">Adresse de livraison</label>
+                <input type="text" id="input-adresse" placeholder="162 rue de la Paix, La Rochelle">
+              </div>
+              <div>
+                <label for="input-tarif">Tarif total (€)</label>
+                <input type="number" id="input-tarif" placeholder="268" step="0.01" min="0">
+              </div>
+            </div>
+            <div class="form-row form-row--4">
+              <div>
+                <label for="res-debut">Date début</label>
+                <input type="date" id="res-debut" required>
+              </div>
+              <div>
+                <label for="res-fin">Date fin</label>
+                <input type="date" id="res-fin" required>
+              </div>
+              <div>
+                <label for="res-statut">Statut</label>
+                <select id="res-statut">
+                  <option value="confirmée">Confirmée</option>
+                  <option value="en attente">En attente</option>
+                </select>
+              </div>
+              <div style="display:flex;align-items:flex-end;gap:0.5rem;flex-wrap:wrap">
+                <button type="submit" class="btn btn--orange" id="res-submit-btn" style="flex:1">Ajouter</button>
+                <button type="button" class="btn btn--ghost" id="res-cancel-edit" style="display:none">Annuler</button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <section class="section">
+          <h2 class="section__title">Liste des réservations</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Clim</th>
+                  <th>Client</th>
+                  <th>Adresse</th>
+                  <th>Tarif</th>
+                  <th>Date début</th>
+                  <th>Date fin</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="reservations-tbody">
+                <tr><td colspan="8" class="loading">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- Panel Statistiques -->
+      <div id="panel-statistiques" class="panel">
+        <section class="section">
+          <h2 class="section__title">Statistiques du parc</h2>
+
+          <div class="stats-view-tabs" role="tablist" aria-label="Période d'analyse">
+            <button type="button" class="stats-view-tab active" data-stats-view="day" role="tab">Par jour</button>
+            <button type="button" class="stats-view-tab" data-stats-view="month" role="tab">Par mois</button>
+            <button type="button" class="stats-view-tab" data-stats-view="year" role="tab">Par année</button>
+          </div>
+
+          <div class="stats-recap" id="stats-recap">
+            <div class="stats-recap__item">
+              <div class="stats-recap__label">Chiffre d'affaires total</div>
+              <div class="stats-recap__value" id="stats-recap-ca">—</div>
+            </div>
+            <div class="stats-recap__item">
+              <div class="stats-recap__label">Jours loués</div>
+              <div class="stats-recap__value" id="stats-recap-days">—</div>
+            </div>
+            <div class="stats-recap__item">
+              <div class="stats-recap__label">Clim la plus rentable</div>
+              <div class="stats-recap__value stats-recap__value--orange" id="stats-recap-best">—</div>
+            </div>
+          </div>
+
+          <div class="chart-wrap">
+            <canvas id="stats-chart"></canvas>
+          </div>
+
+          <h3 class="section-subtitle" id="stats-roi-title">ROI par clim — 30 derniers jours</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Clim</th>
+                  <th>Jours loués</th>
+                  <th>Revenu généré</th>
+                  <th>Prix d'achat</th>
+                  <th>ROI (€)</th>
+                  <th>ROI (%)</th>
+                </tr>
+              </thead>
+              <tbody id="stats-tbody">
+                <tr><td colspan="6" class="loading">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- Panel Carte -->
+      <div id="panel-carte" class="panel">
+        <section class="section">
+          <h2 class="section__title">Carte du parc — locations en cours</h2>
+          <p style="font-size:0.875rem;color:var(--gray-600);margin-bottom:1rem;">Marqueurs pour les clims actives avec une réservation confirmée aujourd'hui.</p>
+          <div class="map-layout">
+            <div id="fleet-map"></div>
+            <aside class="map-sidebar">
+              <h3>Clims disponibles</h3>
+              <ul id="available-clims-list">
+                <li class="loading">Chargement…</li>
+              </ul>
+              <h3 style="margin-top:1.25rem;color:var(--orange-dark)">Clims sans localisation</h3>
+              <ul id="no-location-clims-list">
+                <li class="loading">Chargement…</li>
+              </ul>
+            </aside>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    let allClims = [];
+    let allReservations = [];
+    let statsChart = null;
+    let statsViewMode = 'day';
+    let fleetMap = null;
+    let mapMarkersLayer = null;
+    let editingReservationId = null;
+    const geocodeCache = {};
+
+    function todayISO() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function formatDateFr(d) {
+      if (!d) return '—';
+      var p = d.split('-');
+      return p[2] + '/' + p[1] + '/' + p[0];
+    }
+
+    function formatTarif(n) {
+      if (n == null || n === '' || isNaN(n)) return '—';
+      var rounded = Math.round(parseFloat(n) * 100) / 100;
+      return Number.isInteger(rounded)
+        ? rounded + ',00 €'
+        : rounded.toFixed(2).replace('.', ',') + ' €';
+    }
+
+    function formatEuroNum(n) {
+      if (n == null || isNaN(n)) return '—';
+      var rounded = Math.round(n * 100) / 100;
+      return (Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2).replace('.', ',')) + ' €';
+    }
+
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function getClimName(id) {
+      var c = allClims.find(function(x) { return x.id === id; });
+      return c ? c.nom : 'Clim #' + id;
+    }
+
+    function rentalDays(debut, fin) {
+      var s = new Date(debut + 'T12:00:00');
+      var e = new Date(fin + 'T12:00:00');
+      return Math.max(0, Math.round((e - s) / 86400000) + 1);
+    }
+
+    function confirmedReservationsForClim(climId) {
+      return allReservations.filter(function(r) {
+        return r.clim_id === climId && r.statut === 'confirmée';
+      });
+    }
+
+    function eachRentalDay(dateDebut, dateFin, callback) {
+      var d = new Date(dateDebut + 'T12:00:00');
+      var end = new Date(dateFin + 'T12:00:00');
+      while (d <= end) {
+        callback(d.toISOString().split('T')[0]);
+        d.setDate(d.getDate() + 1);
+      }
+    }
+
+    function getDailyRate(reservation) {
+      var days = rentalDays(reservation.date_debut, reservation.date_fin);
+      if (days <= 0) return 0;
+      var tarif = parseFloat(reservation.tarif);
+      if (isNaN(tarif) || tarif <= 0) return 0;
+      return tarif / days;
+    }
+
+    function dayToBucketKey(dateStr, mode) {
+      if (mode === 'day') return dateStr;
+      if (mode === 'month') return dateStr.slice(0, 7);
+      return dateStr.slice(0, 4);
+    }
+
+    function getActivePeriodKeys(mode) {
+      var keys = [];
+      var today = new Date();
+      today.setHours(12, 0, 0, 0);
+
+      if (mode === 'day') {
+        for (var i = 29; i >= 0; i--) {
+          var d = new Date(today);
+          d.setDate(d.getDate() - i);
+          keys.push(d.toISOString().split('T')[0]);
+        }
+        return keys;
+      }
+
+      if (mode === 'month') {
+        for (var j = 11; j >= 0; j--) {
+          var m = new Date(today.getFullYear(), today.getMonth() - j, 1);
+          var mk = m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0');
+          keys.push(mk);
+        }
+        return keys;
+      }
+
+      var minYear = today.getFullYear();
+      allReservations.forEach(function(r) {
+        var y = parseInt(r.date_debut.slice(0, 4), 10);
+        if (!isNaN(y) && y < minYear) minYear = y;
+      });
+      for (var y = minYear; y <= today.getFullYear(); y++) {
+        keys.push(String(y));
+      }
+      if (!keys.length) keys.push(String(today.getFullYear()));
+      return keys;
+    }
+
+    function formatBucketLabel(key, mode) {
+      if (mode === 'day') {
+        var p = key.split('-');
+        return p[2] + '/' + p[1];
+      }
+      if (mode === 'month') {
+        var months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+        var parts = key.split('-');
+        return months[parseInt(parts[1], 10) - 1] + ' ' + parts[0];
+      }
+      return key;
+    }
+
+    function getPeriodDescription(mode) {
+      if (mode === 'day') return '30 derniers jours';
+      if (mode === 'month') return '12 derniers mois';
+      return 'toutes les années enregistrées';
+    }
+
+    function roundMoney(n) {
+      return Math.round(n * 100) / 100;
+    }
+
+    function buildStatsData(mode) {
+      var activeKeys = getActivePeriodKeys(mode);
+      var keySet = {};
+      activeKeys.forEach(function(k) { keySet[k] = true; });
+
+      var buckets = {};
+      activeKeys.forEach(function(k) {
+        buckets[k] = { revenue: 0, days: 0 };
+      });
+
+      var activeClims = allClims.filter(function(c) { return c.actif; });
+      var climStats = {};
+      activeClims.forEach(function(c) {
+        climStats[c.id] = { revenue: 0, days: 0, clim: c };
+      });
+
+      var confirmed = allReservations.filter(function(r) {
+        return r.statut === 'confirmée';
+      });
+
+      confirmed.forEach(function(r) {
+        var daily = getDailyRate(r);
+        if (daily <= 0) return;
+
+        eachRentalDay(r.date_debut, r.date_fin, function(dayStr) {
+          var bucketKey = dayToBucketKey(dayStr, mode);
+          if (!keySet[bucketKey]) return;
+
+          buckets[bucketKey].revenue += daily;
+          buckets[bucketKey].days += 1;
+
+          if (climStats[r.clim_id]) {
+            climStats[r.clim_id].revenue += daily;
+            climStats[r.clim_id].days += 1;
+          }
+        });
+      });
+
+      activeKeys.forEach(function(k) {
+        buckets[k].revenue = roundMoney(buckets[k].revenue);
+      });
+
+      Object.keys(climStats).forEach(function(id) {
+        climStats[id].revenue = roundMoney(climStats[id].revenue);
+      });
+
+      var totalRevenue = 0;
+      var totalDays = 0;
+      activeKeys.forEach(function(k) {
+        totalRevenue += buckets[k].revenue;
+        totalDays += buckets[k].days;
+      });
+      totalRevenue = roundMoney(totalRevenue);
+
+      var bestClim = null;
+      var bestRevenue = -1;
+      activeClims.forEach(function(c) {
+        var s = climStats[c.id];
+        if (s && s.revenue > bestRevenue) {
+          bestRevenue = s.revenue;
+          bestClim = c;
+        }
+      });
+
+      return {
+        activeKeys: activeKeys,
+        labels: activeKeys.map(function(k) { return formatBucketLabel(k, mode); }),
+        revenues: activeKeys.map(function(k) { return buckets[k].revenue; }),
+        climStats: climStats,
+        totalRevenue: totalRevenue,
+        totalDays: totalDays,
+        bestClim: bestClim,
+        bestRevenue: bestRevenue
+      };
+    }
+
+    function computeClimStatsForPeriod(clim, climPeriodData) {
+      var totalDays = climPeriodData ? climPeriodData.days : 0;
+      var totalRevenue = climPeriodData ? climPeriodData.revenue : 0;
+      var prixAchat = clim.prix_achat != null ? parseFloat(clim.prix_achat) : 0;
+      var roiEur = roundMoney(totalRevenue - prixAchat);
+      var roiPct = prixAchat > 0 ? (roiEur / prixAchat) * 100 : null;
+
+      return {
+        totalDays: totalDays,
+        totalRevenue: totalRevenue,
+        prixAchat: prixAchat,
+        roiEur: roiEur,
+        roiPct: roiPct
+      };
+    }
+
+    function computeClimStats(clim) {
+      var res = confirmedReservationsForClim(clim.id);
+      var totalDays = 0;
+      var totalRevenue = 0;
+
+      res.forEach(function(r) {
+        var days = rentalDays(r.date_debut, r.date_fin);
+        totalDays += days;
+        if (r.tarif != null && !isNaN(parseFloat(r.tarif))) {
+          totalRevenue += parseFloat(r.tarif);
+        }
+      });
+
+      totalRevenue = roundMoney(totalRevenue);
+      var prixAchat = clim.prix_achat != null ? parseFloat(clim.prix_achat) : 0;
+      var roiEur = roundMoney(totalRevenue - prixAchat);
+      var roiPct = prixAchat > 0 ? (roiEur / prixAchat) * 100 : null;
+
+      return {
+        totalDays: totalDays,
+        totalRevenue: totalRevenue,
+        prixAchat: prixAchat,
+        roiEur: roiEur,
+        roiPct: roiPct
+      };
+    }
+
+    function getCurrentReservation(climId) {
+      var today = todayISO();
+      return allReservations.find(function(r) {
+        return r.clim_id === climId &&
+          r.statut === 'confirmée' &&
+          r.date_debut <= today &&
+          r.date_fin >= today;
+      });
+    }
+
+    function showResMessage(type, text) {
+      var ok = document.getElementById('res-success');
+      var err = document.getElementById('res-error');
+      ok.classList.remove('visible');
+      err.classList.remove('visible');
+      if (type === 'ok') {
+        ok.textContent = text;
+        ok.classList.add('visible');
+      } else {
+        err.textContent = text;
+        err.classList.add('visible');
+      }
+      setTimeout(function() {
+        ok.classList.remove('visible');
+        err.classList.remove('visible');
+      }, 4000);
+    }
+
+    function switchPanel(panelId) {
+      document.querySelectorAll('.admin-nav__btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.panel === panelId);
+      });
+      document.querySelectorAll('.panel').forEach(function(p) {
+        p.classList.remove('active');
+      });
+      var panel = document.getElementById('panel-' + panelId);
+      if (panel) panel.classList.add('active');
+
+      if (panelId === 'carte') {
+        setTimeout(function() {
+          initFleetMap();
+          renderFleetMap();
+        }, 100);
+      }
+      if (panelId === 'statistiques') {
+        renderStats();
+      }
+    }
+
+    document.querySelectorAll('.admin-nav__btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        switchPanel(btn.dataset.panel);
+      });
+    });
+
+    document.querySelectorAll('.stats-view-tab').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        statsViewMode = btn.dataset.statsView;
+        document.querySelectorAll('.stats-view-tab').forEach(function(b) {
+          b.classList.toggle('active', b === btn);
+        });
+        renderStats();
+      });
+    });
+
+    async function chargerDonnees() {
+      try {
+        var results = await Promise.all([
+          db.from('clims').select('*').order('id'),
+          db.from('reservations').select('*').order('date_debut', { ascending: true })
+        ]);
+
+        if (results[0].error) throw results[0].error;
+        if (results[1].error) throw results[1].error;
+
+        allClims = results[0].data || [];
+        allReservations = results[1].data || [];
+
+        renderClims();
+        renderReservations();
+        populateClimSelect();
+        renderStats();
+
+        if (document.getElementById('panel-carte').classList.contains('active')) {
+          renderFleetMap();
+        }
+      } catch (e) {
+        console.error(e);
+        document.getElementById('clim-list').innerHTML =
+          '<p class="empty">Erreur de chargement : ' + escapeHtml(e.message) + '</p>';
+      }
+    }
+
+    function renderClims() {
+      var list = document.getElementById('clim-list');
+
+      if (!allClims.length) {
+        list.innerHTML = '<p class="empty">Aucune climatiseur enregistrée.</p>';
+        return;
+      }
+
+      list.innerHTML = allClims.map(function(c) {
+        return '<div class="clim-card" data-clim-id="' + c.id + '">' +
+          '<div class="clim-card__header">' +
+            '<div class="field-nom">' +
+              '<label for="clim-nom-' + c.id + '">Nom</label>' +
+              '<input type="text" id="clim-nom-' + c.id + '" value="' + escapeHtml(c.nom) + '">' +
+            '</div>' +
+            '<span class="badge ' + (c.actif ? 'badge--active' : 'badge--inactive') + '">' +
+              (c.actif ? 'Active' : 'Inactive') + '</span>' +
+          '</div>' +
+          '<div class="form-row form-row--2">' +
+            '<div>' +
+              '<label for="clim-marque-' + c.id + '">Marque</label>' +
+              '<input type="text" id="clim-marque-' + c.id + '" value="' + escapeHtml(c.marque || '') + '" placeholder="Ex: Daikin, Mitsubishi…">' +
+            '</div>' +
+            '<div>' +
+              '<label for="clim-prix-' + c.id + '">Prix d\'achat (€)</label>' +
+              '<input type="number" id="clim-prix-' + c.id + '" step="0.01" min="0" value="' + (c.prix_achat != null ? c.prix_achat : '') + '" placeholder="600">' +
+            '</div>' +
+          '</div>' +
+          '<div class="form-row form-row--2">' +
+            '<div>' +
+              '<label for="clim-date-' + c.id + '">Date d\'achat</label>' +
+              '<input type="date" id="clim-date-' + c.id + '" value="' + (c.date_achat || '') + '">' +
+            '</div>' +
+          '</div>' +
+          '<div class="form-row">' +
+            '<div>' +
+              '<label for="clim-notes-' + c.id + '">Notes</label>' +
+              '<textarea id="clim-notes-' + c.id + '" placeholder="Pannes, entretien, historique…">' + escapeHtml(c.notes || '') + '</textarea>' +
+            '</div>' +
+          '</div>' +
+          '<div class="clim-card__actions">' +
+            '<button type="button" class="btn btn--blue btn--sm" data-save="' + c.id + '">Enregistrer</button>' +
+            '<button type="button" class="btn btn--ghost btn--sm" data-toggle="' + c.id + '">' +
+              (c.actif ? 'Désactiver' : 'Activer') + '</button>' +
+            '<button type="button" class="btn btn--danger btn--sm" data-delete="' + c.id + '">Supprimer</button>' +
+            '<span class="save-msg" id="save-msg-' + c.id + '">Enregistré ✓</span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      list.querySelectorAll('[data-save]').forEach(function(btn) {
+        btn.addEventListener('click', function() { saveClim(parseInt(btn.dataset.save, 10)); });
+      });
+
+      list.querySelectorAll('[data-toggle]').forEach(function(btn) {
+        btn.addEventListener('click', function() { toggleClim(parseInt(btn.dataset.toggle, 10)); });
+      });
+
+      list.querySelectorAll('[data-delete]').forEach(function(btn) {
+        btn.addEventListener('click', function() { deleteClim(parseInt(btn.dataset.delete, 10)); });
+      });
+    }
+
+    async function saveClim(id) {
+      var nom = document.getElementById('clim-nom-' + id).value.trim();
+      if (!nom) return alert('Le nom ne peut pas être vide.');
+
+      var marque = document.getElementById('clim-marque-' + id).value.trim() || null;
+      var prixVal = document.getElementById('clim-prix-' + id).value;
+      var prix_achat = prixVal !== '' ? parseFloat(prixVal) : null;
+      var date_achat = document.getElementById('clim-date-' + id).value || null;
+      var notes = document.getElementById('clim-notes-' + id).value.trim() || null;
+
+      var btn = document.querySelector('[data-save="' + id + '"]');
+      if (btn) btn.disabled = true;
+
+      var result = await db.from('clims').update({
+        nom: nom,
+        marque: marque,
+        prix_achat: prix_achat,
+        date_achat: date_achat,
+        notes: notes
+      }).eq('id', id);
+
+      if (btn) btn.disabled = false;
+
+      if (result.error) return alert('Erreur : ' + result.error.message);
+
+      var msg = document.getElementById('save-msg-' + id);
+      if (msg) {
+        msg.classList.add('visible');
+        setTimeout(function() { msg.classList.remove('visible'); }, 2500);
+      }
+
+      chargerDonnees();
+    }
+
+    function populateClimSelect() {
+      var select = document.getElementById('res-clim');
+      var active = allClims.filter(function(c) { return c.actif; });
+      select.innerHTML = active.length
+        ? active.map(function(c) {
+            return '<option value="' + c.id + '">' + escapeHtml(c.nom) + '</option>';
+          }).join('')
+        : '<option value="">Aucune clim active</option>';
+    }
+
+    function renderReservations() {
+      var tbody = document.getElementById('reservations-tbody');
+
+      if (!allReservations.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty">Aucune réservation.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = allReservations.map(function(r) {
+        var statutCls = r.statut === 'confirmée' ? 'statut--confirmed' : 'statut--pending';
+        var confirmBtn = r.statut === 'en attente'
+          ? '<button type="button" class="btn btn--success btn--sm" data-confirm="' + r.id + '">Confirmer</button>'
+          : '';
+        var geoIcon = hasCoords(r) ? ' 📍' : '';
+        var regeocodeBtn = (!hasCoords(r) && r.adresse && r.adresse.trim())
+          ? '<button type="button" class="btn btn--ghost btn--sm" data-regeocode="' + r.id + '" title="Relancer le géocodage">Re-géocoder</button>'
+          : '';
+
+        return '<tr>' +
+          '<td>' + escapeHtml(getClimName(r.clim_id)) + '</td>' +
+          '<td>' + escapeHtml(r.client_nom) + '</td>' +
+          '<td>' + (r.adresse ? escapeHtml(r.adresse) + geoIcon : '—') + '</td>' +
+          '<td>' + formatTarif(r.tarif) + '</td>' +
+          '<td>' + formatDateFr(r.date_debut) + '</td>' +
+          '<td>' + formatDateFr(r.date_fin) + '</td>' +
+          '<td><span class="statut ' + statutCls + '">' + escapeHtml(r.statut) + '</span></td>' +
+          '<td><div class="actions">' + confirmBtn + regeocodeBtn +
+            '<button type="button" class="btn btn--ghost btn--sm" data-edit-res="' + r.id + '">Modifier</button>' +
+            '<button type="button" class="btn btn--danger btn--sm" data-delete-res="' + r.id + '">Supprimer</button>' +
+          '</div></td></tr>';
+      }).join('');
+
+      tbody.querySelectorAll('[data-edit-res]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          startEditReservation(parseInt(btn.dataset.editRes, 10));
+        });
+      });
+
+      tbody.querySelectorAll('[data-confirm]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          confirmReservation(parseInt(btn.dataset.confirm, 10));
+        });
+      });
+
+      tbody.querySelectorAll('[data-delete-res]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          deleteReservation(parseInt(btn.dataset.deleteRes, 10));
+        });
+      });
+
+      tbody.querySelectorAll('[data-regeocode]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          regeocodeReservation(parseInt(btn.dataset.regeocode, 10));
+        });
+      });
+    }
+
+    function renderStats() {
+      var tbody = document.getElementById('stats-tbody');
+      var activeClims = allClims.filter(function(c) { return c.actif; });
+      var data = buildStatsData(statsViewMode);
+      var periodDesc = getPeriodDescription(statsViewMode);
+
+      document.getElementById('stats-recap-ca').textContent = formatEuroNum(data.totalRevenue);
+      document.getElementById('stats-recap-days').textContent = data.totalDays + ' jour' + (data.totalDays > 1 ? 's' : '');
+      document.getElementById('stats-recap-best').textContent = data.bestClim && data.bestRevenue > 0
+        ? data.bestClim.nom + ' (' + formatEuroNum(data.bestRevenue) + ')'
+        : '—';
+      document.getElementById('stats-roi-title').textContent = 'ROI par clim — ' + periodDesc;
+
+      if (!activeClims.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Aucune clim active.</td></tr>';
+        if (statsChart) { statsChart.destroy(); statsChart = null; }
+        return;
+      }
+
+      var rows = activeClims.map(function(c) {
+        var s = computeClimStatsForPeriod(c, data.climStats[c.id]);
+        return { clim: c, stats: s };
+      });
+
+      rows.sort(function(a, b) { return b.stats.roiEur - a.stats.roiEur; });
+
+      tbody.innerHTML = rows.map(function(row) {
+        var s = row.stats;
+        var roiCls = s.roiEur >= 0 ? 'roi-positive' : 'roi-negative';
+        var roiPctStr = s.roiPct != null
+          ? (s.roiPct >= 0 ? '+' : '') + s.roiPct.toFixed(1).replace('.', ',') + ' %'
+          : '—';
+
+        return '<tr>' +
+          '<td><strong>' + escapeHtml(row.clim.nom) + '</strong></td>' +
+          '<td>' + s.totalDays + ' j</td>' +
+          '<td>' + formatEuroNum(s.totalRevenue) + '</td>' +
+          '<td>' + (s.prixAchat > 0 ? formatEuroNum(s.prixAchat) : '—') + '</td>' +
+          '<td class="' + roiCls + '">' + formatEuroNum(s.roiEur) + '</td>' +
+          '<td class="' + roiCls + '">' + roiPctStr + '</td>' +
+        '</tr>';
+      }).join('');
+
+      var ctx = document.getElementById('stats-chart');
+      if (!ctx) return;
+
+      if (statsChart) statsChart.destroy();
+
+      var chartTitles = {
+        day: 'Chiffre d\'affaires par jour — 30 derniers jours',
+        month: 'Chiffre d\'affaires par mois — 12 derniers mois',
+        year: 'Chiffre d\'affaires par année'
+      };
+
+      statsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: 'Chiffre d\'affaires (€)',
+            data: data.revenues,
+            backgroundColor: 'rgba(244, 162, 97, 0.85)',
+            borderColor: '#F4A261',
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: chartTitles[statsViewMode],
+              color: '#2E86AB',
+              font: { family: 'Inter', size: 14, weight: '600' }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return formatEuroNum(ctx.parsed.y);
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                font: { family: 'Inter' },
+                callback: function(v) { return v + ' €'; }
+              },
+              title: { display: true, text: 'CA (€)', color: '#2E86AB', font: { family: 'Inter' } }
+            },
+            x: {
+              ticks: {
+                font: { family: 'Inter', size: statsViewMode === 'day' ? 9 : 11 },
+                maxRotation: statsViewMode === 'day' ? 45 : 0
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function initFleetMap() {
+      if (fleetMap) {
+        fleetMap.invalidateSize();
+        return;
+      }
+
+      fleetMap = L.map('fleet-map', { scrollWheelZoom: true }).setView([46.1591, -1.1520], 10);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(fleetMap);
+
+      mapMarkersLayer = L.layerGroup().addTo(fleetMap);
+    }
+
+    function resetReservationForm() {
+      editingReservationId = null;
+      document.getElementById('add-reservation-form').reset();
+      document.getElementById('res-form-title').textContent = 'Ajouter une réservation';
+      document.getElementById('res-submit-btn').textContent = 'Ajouter';
+      document.getElementById('res-cancel-edit').style.display = 'none';
+    }
+
+    function startEditReservation(id) {
+      var r = allReservations.find(function(x) { return x.id === id; });
+      if (!r) return;
+
+      editingReservationId = id;
+      document.getElementById('res-clim').value = r.clim_id;
+      document.getElementById('res-client').value = r.client_nom;
+      document.getElementById('input-adresse').value = r.adresse || '';
+      document.getElementById('input-tarif').value = r.tarif != null ? r.tarif : '';
+      document.getElementById('res-debut').value = r.date_debut;
+      document.getElementById('res-fin').value = r.date_fin;
+      document.getElementById('res-statut').value = r.statut;
+      document.getElementById('res-form-title').textContent = 'Modifier la réservation';
+      document.getElementById('res-submit-btn').textContent = 'Enregistrer';
+      document.getElementById('res-cancel-edit').style.display = 'inline-flex';
+
+      switchPanel('reservations');
+      document.getElementById('input-adresse').focus();
+      document.getElementById('add-reservation-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    document.getElementById('res-cancel-edit').addEventListener('click', function() {
+      resetReservationForm();
+    });
+
+    function hasCoords(r) {
+      if (!r) return false;
+      var lat = r.latitude != null && r.latitude !== '' ? parseFloat(r.latitude) : NaN;
+      var lng = r.longitude != null && r.longitude !== '' ? parseFloat(r.longitude) : NaN;
+      return !isNaN(lat) && !isNaN(lng);
+    }
+
+    function sleep(ms) {
+      return new Promise(function(resolve) { setTimeout(resolve, ms); });
+    }
+
+    async function saveReservationCoords(reservationId, lat, lng) {
+      var result = await db.from('reservations').update({
+        latitude: lat,
+        longitude: lng
+      }).eq('id', reservationId);
+
+      if (result.error) {
+        console.error('[Geocode] Erreur enregistrement Supabase:', result.error);
+        return false;
+      }
+
+      var local = allReservations.find(function(r) { return r.id === reservationId; });
+      if (local) {
+        local.latitude = lat;
+        local.longitude = lng;
+      }
+      console.log('[Geocode] Coordonnées enregistrées Supabase — id:', reservationId, 'lat:', lat, 'lon:', lng);
+      return true;
+    }
+
+    async function geocodeAddress(address, options) {
+      options = options || {};
+      if (!address || !address.trim()) return null;
+
+      var trimmed = address.trim();
+      var key = trimmed.toLowerCase();
+      if (geocodeCache[key] && !options.skipCache) {
+        console.log('[Geocode] Cache hit —', trimmed, geocodeCache[key]);
+        return geocodeCache[key];
+      }
+
+      var url = 'https://nominatim.openstreetmap.org/search?q=' +
+        encodeURIComponent(trimmed) + '&format=json&limit=1&countrycodes=fr';
+
+      console.log('[Geocode] Avant Nominatim — adresse:', trimmed,
+        options.context ? '(' + options.context + ')' : '');
+      console.log('[Geocode] URL:', url);
+
+      try {
+        var res = await fetch(url, {
+          headers: {
+            'Accept-Language': 'fr',
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!res.ok) {
+          console.warn('[Geocode] HTTP error:', res.status, res.statusText);
+          return null;
+        }
+
+        var data = await res.json();
+        console.log('[Geocode] Réponse brute Nominatim:', data);
+
+        if (data && data.length) {
+          var coords = {
+            lat: parseFloat(data[0].lat),
+            lng: parseFloat(data[0].lon)
+          };
+          console.log('[Geocode] Coordonnées extraites — lat:', coords.lat, 'lon:', coords.lng);
+          geocodeCache[key] = coords;
+          return coords;
+        }
+
+        console.warn('[Geocode] Aucun résultat pour:', trimmed);
+      } catch (e) {
+        console.warn('[Geocode] Erreur fetch:', e);
+      }
+      return null;
+    }
+
+    async function buildReservationPayload(climId, clientNom, dateDebut, dateFin, statut, adresse, tarif, existingReservation) {
+      var payload = {
+        clim_id: climId,
+        client_nom: clientNom,
+        date_debut: dateDebut,
+        date_fin: dateFin,
+        statut: statut,
+        adresse: adresse || null,
+        tarif: tarif,
+        latitude: null,
+        longitude: null
+      };
+
+      if (adresse && adresse.trim()) {
+        console.log('[Réservation] Début géocodage (await) — adresse:', adresse.trim());
+        var coords = await geocodeAddress(adresse, { context: 'save-reservation' });
+        if (coords) {
+          payload.latitude = coords.lat;
+          payload.longitude = coords.lng;
+          console.log('[Réservation] lat/lon prêts pour Supabase — lat:', payload.latitude, 'lon:', payload.longitude);
+        } else if (
+          existingReservation &&
+          existingReservation.adresse &&
+          existingReservation.adresse.trim().toLowerCase() === adresse.trim().toLowerCase() &&
+          hasCoords(existingReservation)
+        ) {
+          payload.latitude = parseFloat(existingReservation.latitude);
+          payload.longitude = parseFloat(existingReservation.longitude);
+          console.log('[Réservation] Géocodage échoué — conservation coords existantes:', payload.latitude, payload.longitude);
+        } else {
+          console.warn('[Réservation] Géocodage échoué — enregistrement sans coordonnées');
+          alert('Adresse introuvable — la réservation sera enregistrée sans coordonnées GPS.');
+        }
+      } else {
+        console.log('[Réservation] Pas d\'adresse — skip géocodage');
+      }
+
+      console.log('[Réservation] Payload final avant Supabase:', JSON.stringify(payload));
+      return payload;
+    }
+
+    async function regeocodeReservation(id) {
+      var r = allReservations.find(function(x) { return x.id === id; });
+      if (!r) return;
+      if (!r.adresse || !r.adresse.trim()) {
+        alert('Aucune adresse à géocoder pour cette réservation.');
+        return;
+      }
+
+      var btn = document.querySelector('[data-regeocode="' + id + '"]');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '…';
+      }
+
+      var coords = await geocodeAddress(r.adresse, { context: 'regeocode-manual', skipCache: true });
+
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Re-géocoder';
+      }
+
+      if (!coords) {
+        alert('❌ Échec du géocodage — adresse introuvable.');
+        return;
+      }
+
+      var ok = await saveReservationCoords(id, coords.lat, coords.lng);
+      if (!ok) {
+        alert('❌ Coordonnées trouvées mais erreur lors de l\'enregistrement Supabase.');
+        return;
+      }
+
+      alert('✅ Géocodage réussi — lat: ' + coords.lat + ', lon: ' + coords.lng);
+      renderReservations();
+      if (document.getElementById('panel-carte').classList.contains('active')) {
+        await renderFleetMap();
+      }
+    }
+
+    function addFleetMarker(clim, res, lat, lng, markersBounds) {
+      var marker = L.marker([lat, lng]);
+      marker.bindTooltip(clim.nom, {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -8],
+        className: 'clim-label'
+      });
+      marker.bindPopup(
+        '<strong>' + escapeHtml(clim.nom) + '</strong><br>' +
+        'Client : ' + escapeHtml(res.client_nom) + '<br>' +
+        'Fin de location : ' + formatDateFr(res.date_fin)
+      );
+      mapMarkersLayer.addLayer(marker);
+      markersBounds.push([lat, lng]);
+    }
+
+    async function renderFleetMap() {
+      if (!fleetMap) initFleetMap();
+      if (!mapMarkersLayer) return;
+
+      mapMarkersLayer.clearLayers();
+
+      var activeClims = allClims.filter(function(c) { return c.actif; });
+      var available = [];
+      var noLocation = [];
+      var markersBounds = [];
+      var fallbackCount = 0;
+
+      for (var i = 0; i < activeClims.length; i++) {
+        var clim = activeClims[i];
+        var res = getCurrentReservation(clim.id);
+
+        if (!res) {
+          available.push(clim.nom);
+          continue;
+        }
+
+        var lat, lng;
+
+        if (hasCoords(res)) {
+          lat = parseFloat(res.latitude);
+          lng = parseFloat(res.longitude);
+          addFleetMarker(clim, res, lat, lng, markersBounds);
+          continue;
+        }
+
+        if (!res.adresse || !res.adresse.trim()) {
+          noLocation.push(clim.nom + ' (sans adresse)');
+          continue;
+        }
+
+        if (fallbackCount > 0) await sleep(1100);
+        fallbackCount++;
+
+        console.log('[Carte] Fallback géocodage — clim:', clim.nom, 'adresse:', res.adresse);
+        var coords = await geocodeAddress(res.adresse, {
+          context: 'map-fallback',
+          reservationId: res.id,
+          skipCache: false
+        });
+
+        if (coords) {
+          lat = coords.lat;
+          lng = coords.lng;
+          await saveReservationCoords(res.id, lat, lng);
+          addFleetMarker(clim, res, lat, lng, markersBounds);
+        } else {
+          noLocation.push(clim.nom);
+        }
+      }
+
+      var listEl = document.getElementById('available-clims-list');
+      if (available.length) {
+        listEl.innerHTML = available.map(function(n) {
+          return '<li>' + escapeHtml(n) + '</li>';
+        }).join('');
+      } else {
+        listEl.innerHTML = '<li style="color:var(--gray-400)">Aucune — toutes les clims actives sont en location.</li>';
+      }
+
+      var noLocEl = document.getElementById('no-location-clims-list');
+      if (noLocation.length) {
+        noLocEl.innerHTML = noLocation.map(function(n) {
+          return '<li>' + escapeHtml(n) + '</li>';
+        }).join('');
+      } else {
+        noLocEl.innerHTML = '<li style="color:var(--gray-400)">Aucune — toutes les locations en cours sont géolocalisées.</li>';
+      }
+
+      if (markersBounds.length) {
+        fleetMap.fitBounds(markersBounds, { padding: [40, 40], maxZoom: 13 });
+      } else {
+        fleetMap.setView([46.1591, -1.1520], 10);
+      }
+
+      setTimeout(function() { fleetMap.invalidateSize(); }, 200);
+    }
+
+    document.getElementById('add-clim-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var nom = document.getElementById('new-clim-nom').value.trim();
+      if (!nom) return;
+
+      var result = await db.from('clims').insert({ nom: nom, actif: true });
+      if (result.error) return alert('Erreur : ' + result.error.message);
+
+      document.getElementById('new-clim-nom').value = '';
+      chargerDonnees();
+    });
+
+    async function toggleClim(id) {
+      var clim = allClims.find(function(c) { return c.id === id; });
+      if (!clim) return;
+
+      var result = await db.from('clims').update({ actif: !clim.actif }).eq('id', id);
+      if (result.error) return alert('Erreur : ' + result.error.message);
+      chargerDonnees();
+    }
+
+    async function deleteClim(id) {
+      if (!confirm('Êtes-vous sûr de vouloir supprimer cette climatiseur ?')) return;
+
+      var result = await db.from('clims').delete().eq('id', id);
+      if (result.error) return alert('Erreur : ' + result.error.message);
+      chargerDonnees();
+    }
+
+    document.getElementById('add-reservation-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      var climId = parseInt(document.getElementById('res-clim').value, 10);
+      var clientNom = document.getElementById('res-client').value.trim();
+      var dateDebut = document.getElementById('res-debut').value;
+      var dateFin = document.getElementById('res-fin').value;
+      var statut = document.getElementById('res-statut').value;
+      var adresse = document.getElementById('input-adresse').value.trim();
+      var tarif = parseFloat(document.getElementById('input-tarif').value) || null;
+      var submitBtn = document.getElementById('res-submit-btn');
+
+      if (!climId) {
+        showResMessage('error', 'Aucune clim active disponible.');
+        return;
+      }
+
+      if (dateFin < dateDebut) {
+        showResMessage('error', 'La date de fin doit être après la date de début.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Géolocalisation…';
+
+      var existingReservation = editingReservationId
+        ? allReservations.find(function(r) { return r.id === editingReservationId; })
+        : null;
+
+      var payload = await buildReservationPayload(
+        climId, clientNom, dateDebut, dateFin, statut, adresse, tarif, existingReservation
+      );
+
+      console.log('[Réservation] Insertion Supabase après géocodage — lat:', payload.latitude, 'lon:', payload.longitude);
+
+      var result;
+      if (editingReservationId) {
+        result = await db.from('reservations').update(payload).eq('id', editingReservationId);
+      } else {
+        result = await db.from('reservations').insert(payload);
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = editingReservationId ? 'Enregistrer' : 'Ajouter';
+
+      if (result.error) {
+        showResMessage('error', 'Erreur : ' + result.error.message);
+        return;
+      }
+
+      showResMessage('ok', editingReservationId
+        ? '✅ Réservation modifiée avec succès.'
+        : '✅ Réservation ajoutée avec succès.');
+      resetReservationForm();
+      chargerDonnees();
+    });
+
+    async function confirmReservation(id) {
+      var result = await db.from('reservations').update({ statut: 'confirmée' }).eq('id', id);
+      if (result.error) return alert('Erreur : ' + result.error.message);
+      chargerDonnees();
+    }
+
+    async function deleteReservation(id) {
+      if (!confirm('Supprimer cette réservation ?')) return;
+
+      var result = await db.from('reservations').delete().eq('id', id);
+      if (result.error) return alert('Erreur : ' + result.error.message);
+      chargerDonnees();
+    }
+
+    document.getElementById('btn-login').addEventListener('click', async function() {
+      var username = document.getElementById('input-username').value.trim();
+      var password = document.getElementById('input-password').value.trim();
+      var errorMsg = document.getElementById('error-msg');
+
+      if (!username || !password) {
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      errorMsg.style.display = 'none';
+
+      var result = await db
+        .from('admin_users')
+        .select('*')
+        .eq('username', username)
+        .eq('password', password)
+        .single();
+
+      if (result.data && !result.error) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'block';
+        chargerDonnees();
+      } else {
+        errorMsg.style.display = 'block';
+      }
+    });
+
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
+        document.getElementById('btn-login').click();
+      }
+    });
+  </script>
+</body>
+</html>
